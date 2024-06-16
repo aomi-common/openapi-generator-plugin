@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.openapitools</groupId>
-    <artifactId>my-go-gin-server-openapi-generator</artifactId>
+    <artifactId>am-openapi-generator</artifactId>
     <packaging>jar</packaging>
     <name>am-openapi-generator</name>
     <version>1.0.0</version>
