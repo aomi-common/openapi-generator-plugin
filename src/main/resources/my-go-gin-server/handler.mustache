@@ -1,0 +1,48 @@
+{{>partial_header}}
+package {{package}}
+
+import (
+	"github.com/gin-gonic/gin"
+    {{goApiAlias}} "{{goApiInterfaceFullPackage}}"
+    {{goControllerAlias}} "{{goControllerFullPackage}}"
+)
+
+type {{classname}} struct {
+}
+
+{{#operations}}{{#operation}}
+// {{nickname}} {{#summary}}{{{.}}}{{/summary}}
+// {{httpMethod}} {{{basePathWithoutHost}}}{{{path}}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func (api *{{classname}}) {{nickname}}(c *gin.Context) {
+{{#hasParams}}
+    var req {{goApiAlias}}.{{classname}}{{nickname}}Req
+    {{#hasHeaderParams}}_ = c.ShouldBindHeader(&req){{/hasHeaderParams}}
+    {{#hasCookieParams}}// todo cookie bind don't work{{/hasCookieParams}}
+    {{#hasPathParams}}_ = c.ShouldBindUri(&req){{/hasPathParams}}
+    {{#hasQueryParams}}_ = c.ShouldBindQuery(&req){{/hasQueryParams}}
+    if err := c.ShouldBind(&req); err != nil {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
+{{/hasParams}}
+
+    // 请在该路径下定义控制器: {{goControllerFullPackage}}
+    // 并实现接口 {{goApiInterfaceFullPackage}}.{{classname}}
+    controller := &{{goControllerAlias}}.{{classname}}{}
+    payload, err := controller.{{nickname}}(
+        c,{{#hasParams}}
+        req,
+        {{/hasParams}}
+    )
+    if nil != err {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, payload)
+}
+
+{{/operation}}
+{{/operations}}

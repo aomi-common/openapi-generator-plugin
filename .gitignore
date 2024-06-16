@@ -8,6 +8,7 @@
 # 忽略IDE/编辑器生成的文件
 .idea/
 .vscode/
+target
 
 # 忽略依赖管理工具生成的目录
 /vendor/
