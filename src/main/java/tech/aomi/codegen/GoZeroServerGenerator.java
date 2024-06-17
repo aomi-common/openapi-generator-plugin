@@ -1,10 +1,8 @@
 package tech.aomi.codegen;
 
-import org.openapitools.codegen.SupportingFile;
+public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
 
-public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
-
-    public MyGoGinServerGenerator() {
+    public GoZeroServerGenerator() {
         super();
         /*
          * Models.  You can write model files using the modelTemplateFiles map.
@@ -20,20 +18,13 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
          * class
          */
         apiTemplateFiles.put(
-                "interface.mustache",   // the template to use
+                "api.mustache",   // the template to use
                 ".go");       // the extension for each file to write
-        apiTemplateFiles.put(
-                "handler.mustache",   // the template to use
-                ".go");       // the extension for each file to write
-//        apiTemplateFiles.put(
-//                "controller.mustache",   // the template to use
-//                ".go");       // the extension for each file to write
-
         /*
          * Template Location.  This is the location which templates will be read from.  The generator
          * will use the resource stream to attempt to read the templates.
          */
-        embeddedTemplateDir = templateDir = "my-go-gin-server";
+        embeddedTemplateDir = templateDir = "go-zero-server";
 
     }
 
@@ -44,7 +35,7 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
          * entire object tree available.  If the input file has a suffix of `.mustache
          * it will be processed by the template engine.  Otherwise, it will be copied
          */
-        supportingFiles.add(new SupportingFile("routers.mustache", this.routerPackage, "routers.go"));
+//        supportingFiles.add(new SupportingFile("routers.mustache", this.routerPackage, "routers.go"));
     }
 
     /**
@@ -55,7 +46,7 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
      */
     @Override
     public String getName() {
-        return "my-go-gin-server";
+        return "go-zero-server";
     }
 
     /**
@@ -66,8 +57,7 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
      */
     @Override
     public String getHelp() {
-        return "Generates a Go server library with the gin framework using OpenAPI-Generator." +
-                "By default, it will also generate service classes.";
+        return "Generates a Go zero server library with the gin framework using OpenAPI-Generator.";
 
     }
 }
