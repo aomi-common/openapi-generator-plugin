@@ -34,6 +34,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     public static final String DATETIME_FORMAT = "datetimeFormat";
     public static final String DATE_FORMAT = "dateFormat";
     public static final String TIME_FORMAT = "timeFormat";
+    public static final String PAGE_PACKAGE = "pagePackage";
 
     protected String apiVersion = "1.0.0";
 
@@ -50,6 +51,15 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     protected String controllerPackage = "controller";
     @Setter
     protected String routerPackage;
+    /**
+     * page 所在的包路径,通过接口的扩展属性 x-paginated 启用，启用后请求参数会继承 PageRequest. 响应结果使用 Page 包裹
+     * 例如：github.com/xxx/xxx/page
+     * 里面提供两个结构体
+     * 1. Page 带泛型的分页查询结果对象
+     * 2. PageRequest 分页查询请求对象
+     */
+    @Setter
+    protected String pagePackage = "";
     /**
      * 自定义model路径取值key
      * 例如：x-apifox-folder
@@ -138,6 +148,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         cliOptions.add(CliOption.newString(DATETIME_FORMAT, "时间格式"));
         cliOptions.add(CliOption.newString(DATE_FORMAT, "日期格式"));
         cliOptions.add(CliOption.newString(TIME_FORMAT, "时间格式"));
+        cliOptions.add(CliOption.newString(PAGE_PACKAGE, "分页包路径"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_MULTIPLE_OF, "go valid support MULTIPLE_OF"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_REGEXP, "go valid support regexp"));
 
@@ -181,6 +192,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         if (additionalProperties.containsValue(TIME_FORMAT)) {
             this.setTimeFormat(additionalProperties.get(TIME_FORMAT).toString());
         }
+        if (additionalProperties.containsValue(PAGE_PACKAGE)) {
+            this.setPagePackage(additionalProperties.get(PAGE_PACKAGE).toString());
+        }
 
         /*
          * Additional Properties.  These values can be passed to the templates and
@@ -209,6 +223,8 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         OperationMap operations = objs.getOperations();
         List<CodegenOperation> operationList = operations.getOperation();
+
+        boolean needAddPage = false;
         for (CodegenOperation op : operationList) {
             if (op.path != null) {
                 op.path = op.path.replaceAll("\\{(.*?)\\}", ":$1");
@@ -228,6 +244,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                         .findFirst()
                         .ifPresent(m -> op.vendorExtensions.put("returnImportAlias", m.getOrDefault("alias", "")));
             }
+            if (op.vendorExtensions.containsKey("x-paginated")) {
+                needAddPage = true;
+            }
         }
 
         updateOperationsPkgInfo(objs, operations.getClassname());
@@ -242,7 +261,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 item.put("isModelImport", "true");
             });
         }).collect(Collectors.toList());
+
         objs.setImports(imports);
+        objs.put("pageEnabled", needAddPage);
+        objs.put("pagePackage", this.pagePackage);
+        objs.put("pagePackageAlias", sanitizeName(this.pagePackage, "_"));
 
         return objs;
     }
@@ -250,6 +273,10 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     @Override
     public ModelsMap postProcessModels(ModelsMap objs) {
         ModelsMap models = super.postProcessModels(objs);
+        return postProcessModels(objs, models);
+    }
+
+    public ModelsMap postProcessModels(ModelsMap objs, ModelsMap models) {
         models.setModels(models.getModels().stream().map(this::updateModelInfo).collect(Collectors.toList()));
         models.setImports(models.getImportsOrEmpty().stream().peek(item -> {
             String path = item.get("import");
@@ -263,7 +290,6 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         models.put("packageName", models.getModels().get(0).get("packageName"));
         return models;
     }
-
 
     /**
      * Configures the type of generator.
@@ -282,25 +308,6 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         return outputFolder;
     }
 
-    @Override
-    public String apiFilename(String templateName, String tag) {
-        String dir = File.separator;
-        if ("interface.mustache".equalsIgnoreCase(templateName)) {
-            dir += apiPackage + File.separator;
-        } else if ("controller.mustache".equalsIgnoreCase(templateName)) {
-            dir += controllerPackage + File.separator;
-        } else if ("handler.mustache".equalsIgnoreCase(templateName)) {
-            dir += handlerPackage + File.separator;
-        }
-        String t = this.getFirstTagName(tag);
-        if (null != t && !t.isEmpty()) {
-            dir += t.replace('/', File.separatorChar) + File.separatorChar;
-        }
-        dir = dir.replaceAll("-", "_");
-
-        String suffix = this.apiTemplateFiles().get(templateName);
-        return this.apiFileFolder() + dir + this.toApiFilename(tag) + suffix;
-    }
 
     @Override
     public String modelFilename(String templateName, String modelName) {
@@ -316,6 +323,10 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     @Override
     public CodegenModel fromModel(String name, Schema schema) {
         CodegenModel model = super.fromModel(name, schema);
+        return fromModel(model, name, schema);
+    }
+
+    public CodegenModel fromModel(CodegenModel model, String name, Schema schema) {
         String selfPath = toModelImport(name);
         model.setImports(model.getImports().stream().filter(item -> {
             String iPath = toModelImport(item);
@@ -445,7 +456,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         return sanitizeName(path.toString(), "_");
     }
 
-    private String getModelFolder(String name) {
+    protected String getModelFolder(String name) {
         Schema<?> schema = this.openAPI.getComponents()
                 .getSchemas()
                 .keySet()

@@ -2,6 +2,8 @@ package tech.aomi.codegen;
 
 import org.openapitools.codegen.SupportingFile;
 
+import java.io.File;
+
 public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
 
     public MyGoGinServerGenerator() {
@@ -45,6 +47,26 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
          * it will be processed by the template engine.  Otherwise, it will be copied
          */
         supportingFiles.add(new SupportingFile("routers.mustache", this.routerPackage, "routers.go"));
+    }
+
+    @Override
+    public String apiFilename(String templateName, String tag) {
+        String dir = File.separator;
+        if ("interface.mustache".equalsIgnoreCase(templateName)) {
+            dir += apiPackage + File.separator;
+        } else if ("controller.mustache".equalsIgnoreCase(templateName)) {
+            dir += controllerPackage + File.separator;
+        } else if ("handler.mustache".equalsIgnoreCase(templateName)) {
+            dir += handlerPackage + File.separator;
+        }
+        String t = this.getFirstTagName(tag);
+        if (null != t && !t.isEmpty()) {
+            dir += t.replace('/', File.separatorChar) + File.separatorChar;
+        }
+        dir = dir.replaceAll("-", "_");
+
+        String suffix = this.apiTemplateFiles().get(templateName);
+        return this.apiFileFolder() + dir + this.toApiFilename(tag) + suffix;
     }
 
     /**
