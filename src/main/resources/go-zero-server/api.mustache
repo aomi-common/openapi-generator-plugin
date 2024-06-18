@@ -1,41 +1,19 @@
 syntax = "v1"
 
 info(
-    title: {{#appName}}{{{.}}}{{/appName}}
-    desc: {{#appDescription}}{{{.}}}{{/appDescription}}
-    email: {{#infoEmail}}{{{.}}}{{/infoEmail}}
+    {{#appName}}title: "{{{.}}}"{{/appName}}
+    {{#appDescription}}desc: "{{{.}}}"{{/appDescription}}
+    {{#infoEmail}}email: "{{{.}}}"{{/infoEmail}}
 )
 
-{{>partial_header}}
-package {{package}}
-
 import ({{#imports}}{{#isModelImport}}
-    {{alias}} "{{import}}"{{/isModelImport}}{{/imports}}
-    "github.com/gin-gonic/gin"
+    "{{import}}.api"{{/isModelImport}}{{/imports}}
 )
 
 {{#operations}}{{#operation}}{{#hasParams}}
-type {{classname}}{{nickname}}Req struct {
-{{#allParams}}
+type {{classname}}{{nickname}}Req { {{#allParams}}
     {{>paramsVar}} {{>headerParamsTag}}{{>cookieParamsTag}}{{>pathParamsTag}}{{>queryParamsTag}}{{>formParamsTag}}
 {{/allParams}}
 }
 {{/hasParams}}{{/operation}}
 {{/operations}}
-
-type {{classname}} interface {
-
-    {{#operations}}{{#operation}}
-    // {{nickname}} {{httpMethod}} {{{basePathWithoutHost}}}{{{path}}}{{#summary}}
-    // {{{.}}} {{/summary}}
-    {{#isDeprecated}}
-    // Deprecated
-    {{/isDeprecated}}
-    {{nickname}}(
-        c *gin.Context,{{#hasParams}}
-        req {{classname}}{{nickname}}Req,{{/hasParams}}
-    ) ({{>responseType}}, error)
-
-    {{/operation}}
-    {{/operations}}
-}

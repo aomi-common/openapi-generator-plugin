@@ -1,7 +1,7 @@
 syntax = "v1"
 {{#models}}{{#imports}}
 {{#-first}}import (
-{{/-first}}	{{#alias}}{{.}} {{/alias}}"{{import}}"{{#-last}}
+{{/-first}}	"{{import}}.api"{{#-last}}
 )
 {{/-last}}{{/imports}}{{#model}}{{#isEnum}}{{#description}}// {{{classname}}} : {{{description}}}{{/description}}
 type {{{classname}}} {{^format}}{{dataType}}{{/format}}{{{format}}}
@@ -21,6 +21,6 @@ type {{classname}} {
 	{{#deprecated}}
 	// Deprecated
 	{{/deprecated}}
-	{{name}} {{#isNullable}}*{{/isNullable}}{{#isArray}}[]{{/isArray}}{{#needImport}}{{alias}}.{{/needImport}}{{#isArray}}{{{items.dataType}}}{{/isArray}}{{^isArray}}{{{dataType}}}{{/isArray}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"{{>paramsValid}}{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
+	{{name}} {{#isNullable}}*{{/isNullable}}{{#isArray}}[]{{/isArray}}{{#needImport}}{{alias}}.{{/needImport}}{{#isArray}}{{{items.dataType}}}{{/isArray}}{{^isArray}}{{{dataType}}}{{/isArray}} `json:"{{baseName}}{{>paramsValid}}"{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
 {{/vars}}
 }{{/isEnum}}{{/model}}{{/models}}

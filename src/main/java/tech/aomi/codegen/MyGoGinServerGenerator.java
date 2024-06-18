@@ -3,6 +3,7 @@ package tech.aomi.codegen;
 import org.openapitools.codegen.SupportingFile;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
 
@@ -53,11 +54,11 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
     public String apiFilename(String templateName, String tag) {
         String dir = File.separator;
         if ("interface.mustache".equalsIgnoreCase(templateName)) {
-            dir += apiPackage + File.separator;
+            dir += apiPackage.replace('.', File.separatorChar) + File.separator;
         } else if ("controller.mustache".equalsIgnoreCase(templateName)) {
-            dir += controllerPackage + File.separator;
+            dir += controllerPackage.replace('.', File.separatorChar) + File.separator;
         } else if ("handler.mustache".equalsIgnoreCase(templateName)) {
-            dir += handlerPackage + File.separator;
+            dir += handlerPackage.replace('.', File.separatorChar) + File.separator;
         }
         String t = this.getFirstTagName(tag);
         if (null != t && !t.isEmpty()) {
@@ -66,7 +67,7 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
         dir = dir.replaceAll("-", "_");
 
         String suffix = this.apiTemplateFiles().get(templateName);
-        return this.apiFileFolder() + dir + this.toApiFilename(tag) + suffix;
+        return Paths.get(outputFolder, dir, this.toApiFilename(tag), suffix).toString();
     }
 
     /**

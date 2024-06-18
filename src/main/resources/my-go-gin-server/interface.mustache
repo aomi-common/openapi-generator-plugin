@@ -2,7 +2,7 @@
 package {{package}}
 
 import ({{#imports}}{{#isModelImport}}
-    {{alias}} "{{import}}"{{/isModelImport}}{{/imports}}{{#pageEnabled}}
+    {{alias}} {{/isModelImport}}"{{import}}"{{/imports}}{{#pageEnabled}}
     {{pagePackageAlias}} "{{pagePackage}}"{{/pageEnabled}}
     "github.com/gin-gonic/gin"
 )

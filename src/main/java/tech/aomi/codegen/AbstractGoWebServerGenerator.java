@@ -302,13 +302,6 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         return CodegenType.SERVER;
     }
 
-
-    @Override
-    public String apiFileFolder() {
-        return outputFolder;
-    }
-
-
     @Override
     public String modelFilename(String templateName, String modelName) {
         String suffix = this.modelTemplateFiles().get(templateName);
@@ -358,6 +351,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
     @Override
     public String toModelImport(String name) {
+        if ("time.Time".equals(name)) {
+            return "time";
+        }
         String dir = getModelFolder(name);
         return Paths.get(this.moduleName, this.modelPackage().replace('.', File.separatorChar), dir).toString().replaceAll("-", "_");
     }
