@@ -9,6 +9,9 @@ import ({{#imports}}{{#isModelImport}}
 
 {{#operations}}{{#operation}}{{#hasParams}}
 type {{classname}}{{nickname}}Req struct {
+{{#pageEnabled}}
+    {{pagePackageAlias}}.Pageable
+{{/pageEnabled}}
 {{#allParams}}
     {{>paramsVar}} {{>headerParamsTag}}{{>cookieParamsTag}}{{>pathParamsTag}}{{>queryParamsTag}}{{>formParamsTag}}
 {{/allParams}}

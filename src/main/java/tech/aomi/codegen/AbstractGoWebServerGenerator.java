@@ -28,13 +28,13 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     public static final String HANDLER_PACKAGE = "handlerPackage";
     public static final String CONTROLLER_PACKAGE = "controllerPackage";
     public static final String MODEL_FOLDER_FIELD_NAME = "modelFolderFieldName";
-    public static final String ROUTER_PACKAGE = "routerPackage";
     public static final String SUPPORT_VALID_MULTIPLE_OF = "supportValidMultipleOf";
     public static final String SUPPORT_VALID_REGEXP = "supportValidRegexp";
     public static final String DATETIME_FORMAT = "datetimeFormat";
     public static final String DATE_FORMAT = "dateFormat";
     public static final String TIME_FORMAT = "timeFormat";
     public static final String PAGE_PACKAGE = "pagePackage";
+    public static final String PAGE_PACKAGE_ALIAS = "pagePackageAlias";
 
     protected String apiVersion = "1.0.0";
 
@@ -49,8 +49,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     protected String handlerPackage = "handler";
     @Setter
     protected String controllerPackage = "controller";
-    @Setter
-    protected String routerPackage;
+
     /**
      * page 所在的包路径,通过接口的扩展属性 x-paginated 启用，启用后请求参数会继承 PageRequest. 响应结果使用 Page 包裹
      * 例如：github.com/xxx/xxx/page
@@ -59,7 +58,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
      * 2. PageRequest 分页查询请求对象
      */
     @Setter
-    protected String pagePackage = "";
+    protected String pagePackage = "page";
+    @Setter
+    protected String pagePackageAlias = "page";
     /**
      * 自定义model路径取值key
      * 例如：x-apifox-folder
@@ -112,11 +113,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         apiPackage = "api";
         modelPackage = "dto";
-        routerPackage = "main";
 
         // set the output folder here
         outputFolder = "generated/go";
-
 
         /*
          * Reserved words.  Override this with reserved words specific to your language
@@ -144,11 +143,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         cliOptions.add(CliOption.newString(HANDLER_PACKAGE, "请求处理代码生成的包路径."));
         cliOptions.add(CliOption.newString(CONTROLLER_PACKAGE, "Controller代码生成的包路径."));
         cliOptions.add(CliOption.newString(MODEL_FOLDER_FIELD_NAME, "从那个字段获取MODEL的包路径."));
-        cliOptions.add(CliOption.newString(ROUTER_PACKAGE, "[routers.go]包路径."));
         cliOptions.add(CliOption.newString(DATETIME_FORMAT, "时间格式"));
         cliOptions.add(CliOption.newString(DATE_FORMAT, "日期格式"));
         cliOptions.add(CliOption.newString(TIME_FORMAT, "时间格式"));
         cliOptions.add(CliOption.newString(PAGE_PACKAGE, "分页包路径"));
+        cliOptions.add(CliOption.newString(PAGE_PACKAGE_ALIAS, "分页包别名"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_MULTIPLE_OF, "go valid support MULTIPLE_OF"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_REGEXP, "go valid support regexp"));
 
@@ -174,27 +173,31 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         if (additionalProperties.containsKey(MODEL_FOLDER_FIELD_NAME)) {
             this.setModelFolderFieldName(additionalProperties.get(MODEL_FOLDER_FIELD_NAME).toString());
         }
-        if (additionalProperties.containsKey(ROUTER_PACKAGE)) {
-            this.setRouterPackage(additionalProperties.get(ROUTER_PACKAGE).toString());
-        }
+
         if (additionalProperties.containsKey(SUPPORT_VALID_MULTIPLE_OF)) {
             this.setSupportValidMultipleOf(Boolean.parseBoolean(additionalProperties.get(SUPPORT_VALID_MULTIPLE_OF).toString()));
         }
         if (additionalProperties.containsKey(SUPPORT_VALID_REGEXP)) {
             this.setSupportValidRegexp(Boolean.parseBoolean(additionalProperties.get(SUPPORT_VALID_REGEXP).toString()));
         }
-        if (additionalProperties.containsValue(DATETIME_FORMAT)) {
+        if (additionalProperties.containsKey(DATETIME_FORMAT)) {
             this.setDatetimeFormat(additionalProperties.get(DATETIME_FORMAT).toString());
         }
-        if (additionalProperties.containsValue(DATE_FORMAT)) {
+        if (additionalProperties.containsKey(DATE_FORMAT)) {
             this.setDateFormat(additionalProperties.get(DATE_FORMAT).toString());
         }
-        if (additionalProperties.containsValue(TIME_FORMAT)) {
+        if (additionalProperties.containsKey(TIME_FORMAT)) {
             this.setTimeFormat(additionalProperties.get(TIME_FORMAT).toString());
         }
-        if (additionalProperties.containsValue(PAGE_PACKAGE)) {
+        if (additionalProperties.containsKey(PAGE_PACKAGE)) {
             this.setPagePackage(additionalProperties.get(PAGE_PACKAGE).toString());
         }
+        if (additionalProperties.containsKey(PAGE_PACKAGE_ALIAS)) {
+            this.setPagePackageAlias(additionalProperties.get(PAGE_PACKAGE_ALIAS).toString());
+        } else {
+            this.setPagePackageAlias(sanitizeName(this.pagePackage, "_"));
+        }
+
 
         /*
          * Additional Properties.  These values can be passed to the templates and
@@ -264,8 +267,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         objs.setImports(imports);
         objs.put("pageEnabled", needAddPage);
-        objs.put("pagePackage", this.pagePackage);
-        objs.put("pagePackageAlias", sanitizeName(this.pagePackage, "_"));
+        objs.put("pagePackageAlias", this.pagePackageAlias);
 
         return objs;
     }

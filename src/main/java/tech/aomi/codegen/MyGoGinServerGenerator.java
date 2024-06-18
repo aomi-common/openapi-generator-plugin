@@ -1,14 +1,22 @@
 package tech.aomi.codegen;
 
+import lombok.Setter;
+import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.SupportingFile;
 
 import java.io.File;
 import java.nio.file.Paths;
 
 public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
+    public static final String ROUTER_PACKAGE = "routerPackage";
+
+    @Setter
+    protected String routerPackage;
 
     public MyGoGinServerGenerator() {
         super();
+        routerPackage = "main";
+
         /*
          * Models.  You can write model files using the modelTemplateFiles map.
          * if you want to create one template for file, you can do so here.
@@ -28,9 +36,6 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
         apiTemplateFiles.put(
                 "handler.mustache",   // the template to use
                 ".go");       // the extension for each file to write
-//        apiTemplateFiles.put(
-//                "controller.mustache",   // the template to use
-//                ".go");       // the extension for each file to write
 
         /*
          * Template Location.  This is the location which templates will be read from.  The generator
@@ -38,10 +43,17 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
          */
         embeddedTemplateDir = templateDir = "my-go-gin-server";
 
+        cliOptions.add(CliOption.newString(ROUTER_PACKAGE, "[routers.go]包路径."));
     }
 
     @Override
     public void processOpts() {
+        super.processOpts();
+
+        if (additionalProperties.containsKey(ROUTER_PACKAGE)) {
+            this.setRouterPackage(additionalProperties.get(ROUTER_PACKAGE).toString());
+        }
+
         /*
          * Supporting Files.  You can write single files for the generator with the
          * entire object tree available.  If the input file has a suffix of `.mustache
@@ -67,7 +79,7 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
         dir = dir.replaceAll("-", "_");
 
         String suffix = this.apiTemplateFiles().get(templateName);
-        return Paths.get(outputFolder, dir, this.toApiFilename(tag), suffix).toString();
+        return Paths.get(outputFolder, dir, this.toApiFilename(tag) + suffix).toString();
     }
 
     /**

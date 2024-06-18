@@ -1,1 +1,1 @@
-{{#isArray}}[]*{{/isArray}}{{#returnTypeIsPrimitive}}{{{returnType}}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{vendorExtensions.returnImportAlias}}.{{{returnBaseType}}}{{/returnTypeIsPrimitive}}
+{{#pageEnabled}}{{pagePackageAlias}}.Page[{{/pageEnabled}}{{^pageEnabled}}{{#isArray}}[]*{{/isArray}}{{/pageEnabled}}{{#returnTypeIsPrimitive}}{{{returnType}}}{{/returnTypeIsPrimitive}}{{^returnTypeIsPrimitive}}{{vendorExtensions.returnImportAlias}}.{{{returnBaseType}}}{{/returnTypeIsPrimitive}}{{#pageEnabled}}]{{/pageEnabled}}
