@@ -17,3 +17,20 @@ type {{classname}}{{nickname}}Req { {{#allParams}}
 }
 {{/hasParams}}{{/operation}}
 {{/operations}}
+
+{{#operations}}
+@server (
+    group: {{#lambda.lowercase}}{{classname}}{{/lambda.lowercase}}{{#prefix}}
+    prefix: {{.}}{{/prefix}}{{#signature}}
+    signature: true{{/signature}}{{#jwt}}
+    jwt: {{.}}{{/jwt}}{{#middleware}}
+    middleware: {{.}}{{/middleware}}
+)
+
+service {{serviceName}} {
+{{#operation}}
+    {{#summary}}@doc "{{{.}}}"{{/summary}}
+    @handler {{nickname}}
+    {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {{{path}}} ({{classname}}{{nickname}}Req) returns ({{{returnType}}})
+{{/operation}}{{/operations}}
+}

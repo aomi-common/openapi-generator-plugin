@@ -399,8 +399,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         String goControllerAlias = sanitizeName(Paths.get(this.controllerPackage, tag).toString(), "_");
         String goControllerFullPackage = Paths.get(this.moduleName, this.controllerPackage, tag).toString().replaceAll("-", "_");
 
-        Path path = Paths.get(tag);
-        String goPackage = path.getName(path.getNameCount() - 1).toString();
+        String goPackage = api.getName(api.getNameCount() - 1).toString();
         if (goPackage.isEmpty()) {
             goPackage = "main";
         }
@@ -412,6 +411,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         operation.put("goHandlerFullPackage", goHandlerFullPackage);
         operation.put("goControllerAlias", goControllerAlias);
         operation.put("goControllerFullPackage", goControllerFullPackage);
+
+        operation.put("tag", tag);
+        operation.put("filename", this.toApiFilename(classname));
     }
 
     protected ModelMap updateModelInfo(ModelMap model) {

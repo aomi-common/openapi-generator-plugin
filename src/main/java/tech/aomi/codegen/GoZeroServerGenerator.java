@@ -1,7 +1,14 @@
 package tech.aomi.codegen;
 
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.parser.util.SchemaTypeUtil;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenModel;
+import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
 import org.openapitools.codegen.model.OperationsMap;
@@ -9,15 +16,36 @@ import org.openapitools.codegen.model.OperationsMap;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
+
+    public static final String SERVICE_NAME = "serviceName";
+
+    public static final String GROUP_CONFIG = "groupConfig";
+
+
+    @Setter
+    protected String serviceName;
+
+    /**
+     * 分组配置
+     * key 为 tag
+     * value @see {@link GoZeroServerGenerator.GroupConfig}
+     */
+    @Setter
+    protected Map<String, Map<String, String>> groupConfig;
 
     public GoZeroServerGenerator() {
         super();
         // 不支持时间格式
         typeMapping.put("DateTime", "string");
+        serviceName = "app-api";
+        groupConfig = new HashMap<>();
 
         modelPackage = this.apiPackage;
         /*
@@ -42,29 +70,30 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
          */
         embeddedTemplateDir = templateDir = "go-zero-server";
 
+        cliOptions.add(CliOption.newString(SERVICE_NAME, "go zero service name"));
+        cliOptions.add(new CliOption(SERVICE_NAME, "go zero service name", SchemaTypeUtil.OBJECT_TYPE));
+
     }
 
     @Override
     public void processOpts() {
         super.processOpts();
+        if (additionalProperties.containsKey(SERVICE_NAME)) {
+            this.setServiceName(additionalProperties.get(SERVICE_NAME).toString());
+        }
+        if (additionalProperties.containsKey(GROUP_CONFIG)) {
+            this.setGroupConfig((Map<String, Map<String, String>>) additionalProperties.get(GROUP_CONFIG));
+        }
         /*
          * Supporting Files.  You can write single files for the generator with the
          * entire object tree available.  If the input file has a suffix of `.mustache
          * it will be processed by the template engine.  Otherwise, it will be copied
          */
-//        supportingFiles.add(new SupportingFile("routers.mustache", this.routerPackage, "routers.go"));
+        supportingFiles.add(new SupportingFile("root_api.mustache", this.apiPackage, "app.api"));
     }
 
     @Override
     public ModelsMap postProcessModels(ModelsMap objs, ModelsMap models) {
-        String selfPath = models.getModels().get(0).get("importPath").toString();
-        models.setImports(models.getImportsOrEmpty().stream().peek((item) -> {
-            // 计算导入的相对路径
-            String iPath = item.getOrDefault("import", "");
-
-            String newIPath = getRelativePath(selfPath, iPath).toString();
-            item.put("import", newIPath);
-        }).collect(Collectors.toList()));
         return models;
     }
 
@@ -73,14 +102,18 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         OperationsMap operationsMap = super.postProcessOperationsWithModels(objs, allModels);
         String selfPkg = operationsMap.getOrDefault("goApiInterfaceFullPackage", "").toString();
 
-        operationsMap.setImports(operationsMap.getImports().stream().map(item -> {
+        operationsMap.setImports(operationsMap.getImports().stream().peek(item -> {
             String i = item.get("import");
-            if (i.startsWith(this.moduleName)){
+            if (i.startsWith(this.moduleName)) {
                 String newI = getRelativePath(selfPkg, i).toString();
                 item.put("import", newI);
             }
-            return item;
         }).collect(Collectors.toList()));
+
+        Map<String, String> config = this.groupConfig.get(operationsMap.get("tag").toString());
+        if (null != config) {
+            operationsMap.putAll(config);
+        }
 
         return operationsMap;
     }
@@ -92,10 +125,17 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
 
     @Override
     public String toModelImport(String name) {
-        String i = super.toModelImport(name);
-        String filename = this.toModelFilename(name);
+        if (Arrays.asList("set", "array", "time.Time").contains(name)) {
+            // 让AbstractGoCodegen#postProcessOperationsWithModels方法进行移除
+            return apiPackage();
+        }
+        return this.toModelFilename(name);
+    }
 
-        return Paths.get(i, filename).toString();
+    @Override
+    public String modelFilename(String templateName, String modelName) {
+        String suffix = modelTemplateFiles().get(templateName);
+        return modelFileFolder() + File.separator + toModelFilename(modelName) + suffix;
     }
 
     /**
@@ -125,5 +165,26 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         Path base = Paths.get(basePath).getParent();
         Path target = Paths.get(targetPath);
         return base.relativize(target);
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GroupConfig {
+        /**
+         * 启动签名
+         */
+        private Boolean signature;
+
+        /**
+         * jwt 值
+         */
+        private String jwt;
+
+        /**
+         * 中间件
+         */
+        private String middleware;
     }
 }
