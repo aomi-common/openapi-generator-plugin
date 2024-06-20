@@ -1,8 +1,8 @@
 {{>partial_header}}
 package {{package}}
 
-import ({{#imports}}{{#isModelImport}}
-    {{alias}} {{/isModelImport}}"{{import}}"{{/imports}}{{#pageEnabled}}
+import ({{#imports}}
+    {{#isModelImport}}{{alias}} {{/isModelImport}}"{{import}}"{{/imports}}{{#pageEnabled}}
     {{pagePackageAlias}} "{{pagePackage}}"{{/pageEnabled}}
     "github.com/gin-gonic/gin"
 )
