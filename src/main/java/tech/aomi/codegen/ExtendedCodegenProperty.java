@@ -201,7 +201,7 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         if (this.isEnum) {
             conditions.add(new Condition("isEnum", true));
         }
-        if (this.required) {
+        if (this.required && !isReadOnly) {
             conditions.add(new Condition("required", true));
         }
         if (this.isEmail) {
