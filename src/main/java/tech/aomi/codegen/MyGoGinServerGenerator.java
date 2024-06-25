@@ -3,9 +3,14 @@ package tech.aomi.codegen;
 import lombok.Setter;
 import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.SupportingFile;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.OperationsMap;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
     public static final String ROUTER_PACKAGE = "routerPackage";
@@ -60,6 +65,20 @@ public class MyGoGinServerGenerator extends AbstractGoWebServerGenerator {
          * it will be processed by the template engine.  Otherwise, it will be copied
          */
         supportingFiles.add(new SupportingFile("routers.mustache", this.routerPackage, "routers.go"));
+    }
+
+    @Override
+    public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
+        OperationsMap operationsMap = super.postProcessOperationsWithModels(objs, allModels);
+
+        operationsMap.setImports(operationsMap.getImports().stream().filter(item -> {
+            if ("strings".equalsIgnoreCase(item.get("import"))) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList()));
+
+        return operationsMap;
     }
 
     @Override
