@@ -3,7 +3,7 @@ package {{package}}
 
 import (
 	"github.com/gin-gonic/gin"
-    {{goApiAlias}} "{{goApiInterfaceFullPackage}}"
+    {{#hasAnyParams}}{{goApiAlias}} "{{goApiInterfaceFullPackage}}"{{/hasAnyParams}}
     {{goControllerAlias}} "{{goControllerFullPackage}}"
 )
 

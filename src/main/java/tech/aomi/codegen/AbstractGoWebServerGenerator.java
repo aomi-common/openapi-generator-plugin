@@ -228,6 +228,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         List<CodegenOperation> operationList = operations.getOperation();
 
         boolean needAddPage = false;
+        boolean hasAnyParams = false;
         for (CodegenOperation op : operationList) {
             if (op.path != null) {
                 op.path = op.path.replaceAll("\\{(.*?)\\}", ":$1");
@@ -250,6 +251,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             if (op.vendorExtensions.containsKey("x-paginated")) {
                 needAddPage = true;
             }
+            if (op.hasParams) {
+                hasAnyParams = true;
+            }
         }
 
         updateOperationsPkgInfo(objs, operations.getClassname());
@@ -268,6 +272,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         objs.setImports(imports);
         objs.put("pageEnabled", needAddPage);
         objs.put("pagePackageAlias", this.pagePackageAlias);
+        objs.put("hasAnyParams", hasAnyParams);
 
         return objs;
     }
