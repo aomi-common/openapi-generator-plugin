@@ -30,7 +30,7 @@ type {{classname}} interface {
     {{nickname}}(
         c *gin.Context,{{#hasParams}}
         req {{classname}}{{nickname}}Req,{{/hasParams}}
-    ) ({{>responseType}}, error)
+    ) {{^vendorExtensions.returnTypeIsNil}}({{>responseType}}, {{/vendorExtensions.returnTypeIsNil}}error{{^vendorExtensions.returnTypeIsNil}}){{/vendorExtensions.returnTypeIsNil}}
 
     {{/operation}}
     {{/operations}}

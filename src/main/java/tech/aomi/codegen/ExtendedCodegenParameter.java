@@ -1,23 +1,23 @@
 package tech.aomi.codegen;
 
 import lombok.Getter;
-import org.openapitools.codegen.CodegenProperty;
+import org.openapitools.codegen.CodegenParameter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ExtendedCodegenProperty extends CodegenProperty {
+public class ExtendedCodegenParameter extends CodegenParameter {
 
     /**
      * 支持校验数字是否是某个数字的倍数
      */
-    private final boolean supportValidMultipleOf;
+    public boolean supportValidMultipleOf;
 
     /**
      * 支持校验正则表达式
      */
-    private final boolean supportValidRegexp;
+    public boolean supportValidRegexp;
 
     public String datetimeFormat;
     public String dateFormat;
@@ -45,44 +45,40 @@ public class ExtendedCodegenProperty extends CodegenProperty {
      */
     public boolean needImport = false;
 
-    public ExtendedCodegenProperty(CodegenProperty cp, boolean supportValidMultipleOf, boolean supportValidRegexp) {
-        this.supportValidMultipleOf = supportValidMultipleOf;
-        this.supportValidRegexp = supportValidRegexp;
+    public ExtendedCodegenParameter(CodegenParameter cp) {
+        super();
 
-        this.openApiType = cp.openApiType;
+        this.nameInPascalCase = cp.nameInPascalCase;
+        this.nameInSnakeCase = cp.nameInSnakeCase;
+        this.nameInCamelCase = cp.nameInCamelCase;
+
+        this.isFormParam = cp.isFormParam;
+        this.isQueryParam = cp.isQueryParam;
+        this.isPathParam = cp.isPathParam;
+        this.isHeaderParam = cp.isHeaderParam;
+        this.isCookieParam = cp.isCookieParam;
+        this.isBodyParam = cp.isBodyParam;
+        this.isContainer = cp.isContainer;
+        this.isCollectionFormatMulti = cp.isCollectionFormatMulti;
+        this.isPrimitiveType = cp.isPrimitiveType;
+        this.isModel = cp.isModel;
+        this.isExplode = cp.isExplode;
         this.baseName = cp.baseName;
-        this.complexType = cp.complexType;
-        this.getter = cp.getter;
-        this.setter = cp.setter;
-        this.description = cp.description;
+        this.paramName = cp.paramName;
         this.dataType = cp.dataType;
         this.datatypeWithEnum = cp.datatypeWithEnum;
         this.dataFormat = cp.dataFormat;
-        this.name = cp.name;
-        this.min = cp.min;
-        this.max = cp.max;
-        this.defaultValue = cp.defaultValue;
-        this.defaultValueWithParam = cp.defaultValueWithParam;
-        this.baseType = cp.baseType;
-        this.containerType = cp.containerType;
-        this.title = cp.title;
+        this.contentType = cp.contentType;
+        this.collectionFormat = cp.collectionFormat;
+        this.description = cp.description;
         this.unescapedDescription = cp.unescapedDescription;
-        this.maxLength = cp.maxLength;
-        this.minLength = cp.minLength;
-        this.pattern = cp.pattern;
+        this.baseType = cp.baseType;
+        this.defaultValue = cp.defaultValue;
+        this.enumName = cp.enumName;
+        this.style = cp.style;
+        this.nameInLowerCase = cp.nameInLowerCase;
         this.example = cp.example;
         this.jsonSchema = cp.jsonSchema;
-        this.minimum = cp.minimum;
-        this.maximum = cp.maximum;
-        this.multipleOf = cp.multipleOf;
-        this.exclusiveMinimum = cp.exclusiveMinimum;
-        this.exclusiveMaximum = cp.exclusiveMaximum;
-        this.required = cp.required;
-        this.deprecated = cp.deprecated;
-        this.hasMoreNonReadOnly = cp.hasMoreNonReadOnly;
-        this.isPrimitiveType = cp.isPrimitiveType;
-        this.isModel = cp.isModel;
-        this.isContainer = cp.isContainer;
         this.isString = cp.isString;
         this.isNumeric = cp.isNumeric;
         this.isInteger = cp.isInteger;
@@ -93,7 +89,6 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         this.isDecimal = cp.isDecimal;
         this.isByteArray = cp.isByteArray;
         this.isBinary = cp.isBinary;
-        this.isFile = cp.isFile;
         this.isBoolean = cp.isBoolean;
         this.isDate = cp.isDate;
         this.isDateTime = cp.isDateTime;
@@ -104,13 +99,8 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         this.isAnyType = cp.isAnyType;
         this.isArray = cp.isArray;
         this.isMap = cp.isMap;
+        this.isFile = cp.isFile;
         this.isEnum = cp.isEnum;
-        this.isReadOnly = cp.isReadOnly;
-        this.isWriteOnly = cp.isWriteOnly;
-        this.isNullable = cp.isNullable;
-        this.isSelfReference = cp.isSelfReference;
-        this.isCircularReference = cp.isCircularReference;
-        this.isDiscriminator = cp.isDiscriminator;
         this._enum = cp._enum;
         this.allowableValues = cp.allowableValues;
         this.items = cp.items;
@@ -120,26 +110,34 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         this.mostInnerItems = cp.mostInnerItems;
         this.vendorExtensions = cp.vendorExtensions;
         this.hasValidation = cp.hasValidation;
-        this.isInherited = cp.isInherited;
-        this.discriminatorValue = cp.discriminatorValue;
-        this.nameInLowerCase = cp.nameInLowerCase;
-        this.nameInPascalCase = cp.nameInPascalCase;
-        this.nameInSnakeCase = cp.nameInSnakeCase;
-        this.enumName = cp.enumName;
+        this.isNullable = cp.isNullable;
+        this.required = cp.required;
+        this.maximum = cp.maximum;
+        this.exclusiveMaximum = cp.exclusiveMaximum;
+        this.minimum = cp.minimum;
+        this.exclusiveMinimum = cp.exclusiveMinimum;
+        this.maxLength = cp.maxLength;
+        this.minLength = cp.minLength;
+        this.pattern = cp.pattern;
         this.maxItems = cp.maxItems;
         this.minItems = cp.minItems;
+        this.uniqueItems = cp.uniqueItems;
+        this.multipleOf = cp.multipleOf;
+        this.setHasVars(cp.getHasVars());
+        this.setHasRequired(cp.getHasRequired());
         this.setMaxProperties(cp.getMaxProperties());
         this.setMinProperties(cp.getMinProperties());
-        this.setUniqueItems(cp.getUniqueItems());
-        this.isXmlAttribute = cp.isXmlAttribute;
-        this.xmlPrefix = cp.xmlPrefix;
-        this.xmlName = cp.xmlName;
-        this.xmlNamespace = cp.xmlNamespace;
-        this.isXmlWrapped = cp.isXmlWrapped;
-        this.setFormat(cp.getFormat());
 
         this.initConditions();
+
     }
+
+    @Override
+    public ExtendedCodegenParameter copy() {
+        CodegenParameter superCopy = super.copy();
+        return new ExtendedCodegenParameter(superCopy);
+    }
+
 
     public boolean isIpv4() {
         return isNotEmpty(this.getFormat()) && "ipv4".equalsIgnoreCase(this.getFormat());
@@ -164,12 +162,6 @@ public class ExtendedCodegenProperty extends CodegenProperty {
     private void initConditions() {
         List<Map<String, Object>> conditions = new ArrayList<>();
 
-        if (isNotEmpty(this.min)) {
-            conditions.add(new Condition("min", this.min));
-        }
-        if (isNotEmpty(this.max)) {
-            conditions.add(new Condition("max", this.max));
-        }
         if (null != this.maxLength) {
             conditions.add(new Condition("maxLength", this.maxLength));
         }
@@ -178,6 +170,10 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         }
         if (supportValidRegexp && isNotEmpty(this.pattern)) {
             conditions.add(new Condition("pattern", this.pattern));
+        }
+
+        if (null != this.maxLength) {
+            conditions.add(new Condition("maxLength", this.maxLength));
         }
 
         if (isNotEmpty(this.minimum)) {
@@ -201,7 +197,7 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         if (this.isEnum) {
             conditions.add(new Condition("isEnum", true));
         }
-        if (this.required && !isReadOnly) {
+        if (this.required) {
             conditions.add(new Condition("required", true));
         }
         if (this.isEmail) {

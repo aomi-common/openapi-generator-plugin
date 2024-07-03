@@ -1,11 +1,14 @@
 package tech.aomi.codegen;
 
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.Getter;
 import lombok.Setter;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.languages.AbstractGoCodegen;
+import org.openapitools.codegen.languages.TypeScriptFetchClientCodegen;
 import org.openapitools.codegen.meta.features.*;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
@@ -254,6 +257,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             if (op.hasParams) {
                 hasAnyParams = true;
             }
+            if ("nil".equalsIgnoreCase(op.returnType)) {
+                op.vendorExtensions.put("returnTypeIsNil", true);
+            }
         }
 
         updateOperationsPkgInfo(objs, operations.getClassname());
@@ -261,13 +267,18 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         // 更新import 信息
         // interface.mustache 中导入dto的时候使用
-        List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().peek(item -> {
+        List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().filter(item -> {
+            if (item.getOrDefault("classname", "").equalsIgnoreCase("nil")) {
+                return false;
+            }
+            return true;
+        }).peek(item -> {
             String path = item.get("import");
             allModels.stream().filter(m -> m.getOrDefault("importPath", "").equals(path)).findFirst().ifPresent(m -> {
                 item.put("alias", m.getOrDefault("alias", "").toString());
                 item.put("isModelImport", "true");
             });
-        }).collect(Collectors.toList());
+        }).sorted(Comparator.comparing(o -> o.getOrDefault("import", ""))).collect(Collectors.toList());
 
         objs.setImports(imports);
         objs.put("pageEnabled", needAddPage);
@@ -334,6 +345,42 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         }).collect(Collectors.toSet()));
 
         return model;
+    }
+
+    @Override
+    public CodegenParameter fromParameter(Parameter parameter, Set<String> imports) {
+        CodegenParameter cp = super.fromParameter(parameter, imports);
+        ExtendedCodegenParameter ecp = new ExtendedCodegenParameter(cp);
+        ecp.supportValidRegexp = supportValidRegexp;
+        ecp.supportValidMultipleOf = supportValidMultipleOf;
+        ecp.timeFormat = timeFormat;
+        ecp.dateFormat = dateFormat;
+        ecp.datetimeFormat = datetimeFormat;
+        return ecp;
+    }
+
+    @Override
+    public CodegenParameter fromFormProperty(String name, Schema propertySchema, Set<String> imports) {
+        CodegenParameter cp = super.fromFormProperty(name, propertySchema, imports);
+        ExtendedCodegenParameter ecp = new ExtendedCodegenParameter(cp);
+        ecp.supportValidRegexp = supportValidRegexp;
+        ecp.supportValidMultipleOf = supportValidMultipleOf;
+        ecp.timeFormat = timeFormat;
+        ecp.dateFormat = dateFormat;
+        ecp.datetimeFormat = datetimeFormat;
+        return ecp;
+    }
+
+    @Override
+    public CodegenParameter fromRequestBody(RequestBody body, Set<String> imports, String bodyParameterName) {
+        CodegenParameter cp = super.fromRequestBody(body, imports, bodyParameterName);
+        ExtendedCodegenParameter ecp = new ExtendedCodegenParameter(cp);
+        ecp.supportValidRegexp = supportValidRegexp;
+        ecp.supportValidMultipleOf = supportValidMultipleOf;
+        ecp.timeFormat = timeFormat;
+        ecp.dateFormat = dateFormat;
+        ecp.datetimeFormat = datetimeFormat;
+        return ecp;
     }
 
     public ExtendedCodegenProperty fromProperty(String name, Schema p, boolean required) {
