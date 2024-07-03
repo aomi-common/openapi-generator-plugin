@@ -28,7 +28,11 @@ func (api *{{classname}}) {{nickname}}(c *gin.Context) {
         return
     }
     {{#vendorExtensions.hasFileParam}}
-    form, _ := c.MultipartForm()
+    form, err := c.MultipartForm()
+    if nil != err {
+        c.JSON(400, gin.H{"error": err.Error()})
+        return
+    }
     {{#allParams}}{{#isFile}}
     {{baseName}}Files := form.File["{{baseName}}"]
     {{#isArray}}req.{{nameInPascalCase}} = {{baseName}}Files{{/isArray}}
