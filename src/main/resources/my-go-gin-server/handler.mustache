@@ -36,8 +36,9 @@ func (api *{{classname}}) {{nickname}}(c *gin.Context) {
     {{#allParams}}{{#isFile}}
     {{baseName}}Files := form.File["{{baseName}}"]
     {{#isArray}}req.{{nameInPascalCase}} = {{baseName}}Files{{/isArray}}
-    {{^isArray}}req.{{nameInPascalCase}} = {{baseName}}Files[0]{{/isArray}}
-    {{/isFile}}{{/allParams}}{{/vendorExtensions.hasFileParam}}
+    {{^isArray}}if len({{baseName}}Files) > 0 {
+    req.{{nameInPascalCase}} = {{baseName}}Files[0]
+    }{{/isArray}}{{/isFile}}{{/allParams}}{{/vendorExtensions.hasFileParam}}
 {{/hasParams}}
 
     // 请在该路径下定义控制器: {{goControllerFullPackage}}
