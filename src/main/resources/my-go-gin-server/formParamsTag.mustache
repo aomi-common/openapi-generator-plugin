@@ -1,1 +1,1 @@
-{{#isFormParam}}`form:"{{baseName}}"{{>paramsValid}}`{{/isFormParam}}
+{{^isFile}}{{#isFormParam}}`form:"{{baseName}}"{{>paramsValid}}`{{/isFormParam}}{{/isFile}}

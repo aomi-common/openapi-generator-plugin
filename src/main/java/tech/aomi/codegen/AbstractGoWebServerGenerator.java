@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.languages.AbstractGoCodegen;
-import org.openapitools.codegen.languages.TypeScriptFetchClientCodegen;
 import org.openapitools.codegen.meta.features.*;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
@@ -93,6 +92,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     public AbstractGoWebServerGenerator() {
         super();
         this.apiNameSuffix = "";
+
+        typeMapping.put("File", "*multipart.FileHeader");
+        typeMapping.put("file", "*multipart.FileHeader");
+
+        importMapping.put("*multipart.FileHeader", "mime/multipart");
 
         modifyFeatureSet(features -> features
                 .includeDocumentationFeatures(DocumentationFeature.Readme)
@@ -260,6 +264,10 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             if ("nil".equalsIgnoreCase(op.returnType)) {
                 op.vendorExtensions.put("returnTypeIsNil", true);
             }
+
+            Optional.ofNullable(op.allParams)
+                    .flatMap(params -> params.stream().filter(item -> item.isFile).findFirst())
+                    .ifPresent(p -> op.vendorExtensions.put("hasFileParam", true));
         }
 
         updateOperationsPkgInfo(objs, operations.getClassname());

@@ -27,12 +27,19 @@ func (api *{{classname}}) {{nickname}}(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
+    {{#vendorExtensions.hasFileParam}}
+    form, _ := c.MultipartForm()
+    {{#allParams}}{{#isFile}}
+    {{baseName}}Files := form.File["{{baseName}}"]
+    {{#isArray}}req.{{nameInPascalCase}} = {{baseName}}Files{{/isArray}}
+    {{^isArray}}req.{{nameInPascalCase}} = {{baseName}}Files[0]{{/isArray}}
+    {{/isFile}}{{/allParams}}{{/vendorExtensions.hasFileParam}}
 {{/hasParams}}
 
     // 请在该路径下定义控制器: {{goControllerFullPackage}}
     // 并实现接口 {{goApiInterfaceFullPackage}}.{{classname}}
     controller := &{{goControllerAlias}}.{{classname}}{}
-    payload, err := controller.{{nickname}}(
+    {{^vendorExtensions.returnTypeIsNil}}payload, {{/vendorExtensions.returnTypeIsNil}}err := controller.{{nickname}}(
         c,{{#hasParams}}
         req,
         {{/hasParams}}
@@ -41,7 +48,7 @@ func (api *{{classname}}) {{nickname}}(c *gin.Context) {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    c.JSON(200, payload)
+    c.JSON(200, {{#vendorExtensions.returnTypeIsNil}}gin.H{}{{/vendorExtensions.returnTypeIsNil}}{{^vendorExtensions.returnTypeIsNil}}payload{{/vendorExtensions.returnTypeIsNil}})
 }
 
 {{/operation}}
