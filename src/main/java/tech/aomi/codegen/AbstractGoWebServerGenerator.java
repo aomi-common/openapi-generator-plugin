@@ -97,6 +97,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         typeMapping.put("file", "*multipart.FileHeader");
 
         importMapping.put("*multipart.FileHeader", "mime/multipart");
+        languageSpecificPrimitives.add("nil");
 
         modifyFeatureSet(features -> features
                 .includeDocumentationFeatures(DocumentationFeature.Readme)
@@ -275,12 +276,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         // 更新import 信息
         // interface.mustache 中导入dto的时候使用
-        List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().filter(item -> {
-            if (item.getOrDefault("classname", "").equalsIgnoreCase("nil")) {
-                return false;
-            }
-            return true;
-        }).peek(item -> {
+        List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().peek(item -> {
             String path = item.get("import");
             allModels.stream().filter(m -> m.getOrDefault("importPath", "").equals(path)).findFirst().ifPresent(m -> {
                 item.put("alias", m.getOrDefault("alias", "").toString());
