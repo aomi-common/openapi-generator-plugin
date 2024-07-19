@@ -247,6 +247,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                             .filter(m -> m.getModel().getClassname().equals(p.dataType))
                             .findFirst()
                             .ifPresent(m -> p.vendorExtensions.put("importAlias", m.getOrDefault("alias", "")));
+                    if (importMapping().containsKey(p.dataType)) {
+                        p.vendorExtensions.put("importAlias", sanitizeName(importMapping().get(p.dataType), "_"));
+                    }
                 }
             }));
 
@@ -278,6 +281,12 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         // interface.mustache 中导入dto的时候使用
         List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().peek(item -> {
             String path = item.get("import");
+            String classname = item.getOrDefault("classname", "");
+            if (importMapping().containsKey(classname)) {
+                item.put("alias", sanitizeName(path, "_"));
+                item.put("isModelImport", "true");
+            }
+
             allModels.stream().filter(m -> m.getOrDefault("importPath", "").equals(path)).findFirst().ifPresent(m -> {
                 item.put("alias", m.getOrDefault("alias", "").toString());
                 item.put("isModelImport", "true");
