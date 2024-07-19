@@ -248,7 +248,9 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                             .findFirst()
                             .ifPresent(m -> p.vendorExtensions.put("importAlias", m.getOrDefault("alias", "")));
                     if (importMapping().containsKey(p.dataType)) {
-                        p.vendorExtensions.put("importAlias", sanitizeName(importMapping().get(p.dataType), "_"));
+                        if (!Arrays.asList("mime/multipart").contains(importMapping().get(p.dataType))) {
+                            p.vendorExtensions.put("importAlias", sanitizeName(importMapping().get(p.dataType), "_"));
+                        }
                     }
                 }
             }));
@@ -257,7 +259,13 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 allModels.stream()
                         .filter(m -> m.getModel().getClassname().equals(op.returnBaseType))
                         .findFirst()
-                        .ifPresent(m -> op.vendorExtensions.put("returnImportAlias", m.getOrDefault("alias", "")));
+                        .ifPresent(m -> {
+                            if (importMapping().containsKey(op.returnBaseType)) {
+                                op.vendorExtensions.put("returnImportAlias", sanitizeName(importMapping().get(op.returnBaseType), "_"));
+                            } else {
+                                op.vendorExtensions.put("returnImportAlias", m.getOrDefault("alias", ""));
+                            }
+                        });
             }
             if (op.vendorExtensions.containsKey("x-paginated")) {
                 needAddPage = true;
@@ -282,9 +290,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().peek(item -> {
             String path = item.get("import");
             String classname = item.getOrDefault("classname", "");
-            if (importMapping().containsKey(classname)) {
-                item.put("alias", sanitizeName(path, "_"));
-                item.put("isModelImport", "true");
+            if (!Arrays.asList("mime/multipart").contains(importMapping().get(classname))) {
+                if (importMapping().containsKey(classname)) {
+                    item.put("alias", sanitizeName(path, "_"));
+                    item.put("isModelImport", "true");
+                }
             }
 
             allModels.stream().filter(m -> m.getOrDefault("importPath", "").equals(path)).findFirst().ifPresent(m -> {
