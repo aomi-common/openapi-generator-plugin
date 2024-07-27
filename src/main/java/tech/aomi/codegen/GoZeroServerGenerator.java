@@ -1,13 +1,11 @@
 package tech.aomi.codegen;
 
-import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenModel;
 import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
@@ -116,11 +114,6 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         }
 
         return operationsMap;
-    }
-
-    @Override
-    public CodegenModel fromModel(CodegenModel model, String name, Schema schema) {
-        return model;
     }
 
     @Override

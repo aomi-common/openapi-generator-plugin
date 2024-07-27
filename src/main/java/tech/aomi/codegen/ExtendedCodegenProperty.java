@@ -42,6 +42,7 @@ public class ExtendedCodegenProperty extends CodegenProperty {
     public String alias;
     /**
      * 表明该属性的类型是否需要导入
+     * 解决当前包导入当前包的问题
      */
     public boolean needImport = false;
 

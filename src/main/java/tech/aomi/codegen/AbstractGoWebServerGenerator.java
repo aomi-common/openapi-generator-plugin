@@ -89,15 +89,16 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     @Getter
     protected String timeFormat = "15:04:05";
 
+    protected Set<String> noCreateAliasPkgs = new HashSet<>();
+
     public AbstractGoWebServerGenerator() {
         super();
         this.apiNameSuffix = "";
+        apiPackage = "api";
+        modelPackage = "dto";
 
-        typeMapping.put("File", "*multipart.FileHeader");
-        typeMapping.put("file", "*multipart.FileHeader");
-
-        importMapping.put("*multipart.FileHeader", "mime/multipart");
-        languageSpecificPrimitives.add("nil");
+        // set the output folder here
+        outputFolder = "generated/go";
 
         modifyFeatureSet(features -> features
                 .includeDocumentationFeatures(DocumentationFeature.Readme)
@@ -119,33 +120,18 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 )
         );
 
-        apiPackage = "api";
-        modelPackage = "dto";
+        typeMapping.put("File", "*multipart.FileHeader");
+        typeMapping.put("file", "*multipart.FileHeader");
+//        typeMapping.put("duration", "time.Duration");
 
-        // set the output folder here
-        outputFolder = "generated/go";
+        importMapping.put("*multipart.FileHeader", "mime/multipart");
+//        importMapping.put("time.Time", "time");
+//        importMapping.put("*time.Time", "time");
+        languageSpecificPrimitives.add("nil");
 
-        /*
-         * Reserved words.  Override this with reserved words specific to your language
-         */
-        setReservedWordsLowerCase(
-                Arrays.asList(
-                        // data type
-                        "string", "bool", "uint", "uint8", "uint16", "uint32", "uint64",
-                        "int", "int8", "int16", "int32", "int64", "float32", "float64",
-                        "complex64", "complex128", "rune", "byte", "uintptr",
+        noCreateAliasPkgs.add("mime/multipart");
+        noCreateAliasPkgs.add("time");
 
-                        "break", "default", "func", "interface", "select",
-                        "case", "defer", "go", "map", "struct",
-                        "chan", "else", "goto", "package", "switch",
-                        "const", "fallthrough", "if", "range", "type",
-                        "continue", "for", "import", "return", "var", "error", "nil")
-                // Added "error" as it's used so frequently that it may as well be a keyword
-        );
-
-//        this.typeMapping.put("duration", "time.Duration");
-//        this.typeMapping.put("time", "time.Time");
-//        this.typeMapping.put("date", "time.Time");
 
         cliOptions.add(CliOption.newString(MODULE_NAME, "go module name."));
         cliOptions.add(CliOption.newString(HANDLER_PACKAGE, "请求处理代码生成的包路径."));
@@ -248,7 +234,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                             .findFirst()
                             .ifPresent(m -> p.vendorExtensions.put("importAlias", m.getOrDefault("alias", "")));
                     if (importMapping().containsKey(p.dataType)) {
-                        if (!Arrays.asList("mime/multipart").contains(importMapping().get(p.dataType))) {
+                        if (!noCreateAliasPkgs.contains(importMapping().get(p.dataType))) {
                             p.vendorExtensions.put("importAlias", sanitizeName(importMapping().get(p.dataType), "_"));
                         }
                     }
@@ -290,15 +276,21 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         List<Map<String, String>> imports = Optional.ofNullable(objs.getImports()).orElse(new ArrayList<>()).stream().peek(item -> {
             String path = item.get("import");
             String classname = item.getOrDefault("classname", "");
-            if (!Arrays.asList("mime/multipart").contains(importMapping().get(classname))) {
+            if (!noCreateAliasPkgs.contains(importMapping().get(classname))) {
                 if (importMapping().containsKey(classname)) {
-                    item.put("alias", sanitizeName(path, "_"));
+                    String alias = sanitizeName(path, "_");
+
+                    item.put("alias", alias);
                     item.put("isModelImport", "true");
                 }
             }
 
             allModels.stream().filter(m -> m.getOrDefault("importPath", "").equals(path)).findFirst().ifPresent(m -> {
-                item.put("alias", m.getOrDefault("alias", "").toString());
+                String alias = m.getOrDefault("alias", "").toString();
+                if (Paths.get(path).getFileName().toString().equals(alias)) {
+                    alias = "";
+                }
+                item.put("alias", alias);
                 item.put("isModelImport", "true");
             });
         }).sorted(Comparator.comparing(o -> o.getOrDefault("import", ""))).collect(Collectors.toList());
@@ -318,17 +310,61 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     }
 
     public ModelsMap postProcessModels(ModelsMap objs, ModelsMap models) {
-        models.setModels(models.getModels().stream().map(this::updateModelInfo).collect(Collectors.toList()));
-        models.setImports(models.getImportsOrEmpty().stream().peek(item -> {
+
+        models.setModels(models.getModels().stream().peek(model -> {
+            CodegenModel cmodel = model.getModel();
+            Object importPath = model.getOrDefault("importPath", "");
+
+            cmodel.vars.forEach(var -> {
+                // 排除自己导入自己
+                if (var.isModel && var instanceof ExtendedCodegenProperty) {
+                    ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var).importPath);
+                }
+                if (var.isArray && var.items.isModel && var instanceof ExtendedCodegenProperty) {
+                    ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var.items).importPath);
+                }
+            });
+
+
+            String pkgName = getModelPkgName(cmodel.vendorExtensions);
+            String alias = getModelAlias(cmodel.vendorExtensions);
+            // 模块自己所在的包
+            model.put("packageName", pkgName);
+            // 模块自己对应的使用别名
+            model.put("alias", alias);
+        }).collect(Collectors.toList()));
+
+        models.put("packageName", models.getModels().get(0).get("packageName"));
+        Object selfImportPath = models.getModels().get(0).getOrDefault("importPath", "");
+        models.setImports(models.getImportsOrEmpty().stream().filter(item -> {
+            // 排除自己导入自己
             String path = item.get("import");
-            item.put("alias", ""); // 这里设置控制防止使用父级对象中的alias值
+            return !selfImportPath.equals(path);
+        }).peek(item -> {
+            String path = item.get("import");
+            // 别名设置
+            String alias = "";
             if (path.startsWith(this.moduleName)) {
                 path = path.replace(this.moduleName, "");
-                String alias = sanitizeName(path, "_");
-                item.put("alias", alias);
+                alias = sanitizeName(path, "_");
+            } else {
+                alias = sanitizeName(path, "_");
             }
+            String defaultAlias = Paths.get(path).getFileName().toString();
+            if (alias.equalsIgnoreCase(defaultAlias)) {
+                alias = "";
+            }
+            item.put("alias", alias); // 这里设置控制防止使用父级对象中的alias值
         }).collect(Collectors.toList()));
-        models.put("packageName", models.getModels().get(0).get("packageName"));
+
+        models.setModels(models.getModels().stream().filter(item -> {
+            CodegenModel model = item.getModel();
+            // 过滤掉typeMapping ,不在生成typeMapping中定义的model
+            if (typeMapping.containsValue(model.classname)) {
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList()));
         return models;
     }
 
@@ -352,22 +388,6 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         return Paths.get(this.modelFileFolder(), dir, this.toModelFilename(modelName) + suffix).toString();
 
-    }
-
-    @Override
-    public CodegenModel fromModel(String name, Schema schema) {
-        CodegenModel model = super.fromModel(name, schema);
-        return fromModel(model, name, schema);
-    }
-
-    public CodegenModel fromModel(CodegenModel model, String name, Schema schema) {
-        String selfPath = toModelImport(name);
-        model.setImports(model.getImports().stream().filter(item -> {
-            String iPath = toModelImport(item);
-            return !selfPath.equals(iPath);
-        }).collect(Collectors.toSet()));
-
-        return model;
     }
 
     @Override
@@ -412,22 +432,35 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         ecp.datetimeFormat = datetimeFormat;
         ecp.dateFormat = dateFormat;
         ecp.timeFormat = timeFormat;
-        if (!cp.isPrimitiveType) {
-            String type = cp.dataType;
-            if (cp.isArray) {
-                type = cp.items.dataType;
-            }
-            if (!this.typeMapping().containsValue(type)) {
-                ecp.packageName = getModelPkgName(type);
-                ecp.alias = getModelAlias(type);
-                ecp.importPath = this.toModelImport(type);
-            }
+        if (ecp.isModel) {
+            ecp.packageName = getModelPkgName(ecp.vendorExtensions);
+            ecp.alias = getModelAlias(ecp.vendorExtensions);
+            ecp.importPath = toModelImport(ecp.dataType);
+            ecp.needImport = true;
         }
+        if (ecp.isArray && ecp.items.isModel && ecp.items instanceof ExtendedCodegenProperty) {
+            ecp.packageName = getModelPkgName(ecp.vendorExtensions);
+
+            ExtendedCodegenProperty tmp = (ExtendedCodegenProperty) ecp.items;
+            ecp.alias = tmp.alias;
+            ecp.importPath = tmp.importPath;
+            ecp.needImport = tmp.needImport;
+        }
+
         return ecp;
     }
 
     @Override
+    public String toModelName(String name) {
+        if (typeMapping.containsKey(name)) {
+            return typeMapping.get(name);
+        }
+        return super.toModelName(name);
+    }
+
+    @Override
     public String toModelImport(String name) {
+        // 因为 AbstractGoCodegen 手动处理的time 这里只能手动排除
         if ("time.Time".equals(name)) {
             return null;
         }
@@ -491,38 +524,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         operation.put("filename", this.toApiFilename(classname));
     }
 
-    protected ModelMap updateModelInfo(ModelMap model) {
-        CodegenModel cmodel = model.getModel();
-        String importPath = model.get("importPath").toString();
-
-        cmodel.vars.forEach(var -> {
-            if (isModel(var) && var instanceof ExtendedCodegenProperty) {
-                ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var).importPath);
-            }
-        });
-
-        model.put("packageName", getModelPkgName(cmodel.getVendorExtensions()));
-        model.put("alias", getModelAlias(cmodel.getVendorExtensions()));
-        return model;
-    }
-
-
-    private String getModelPkgName(String name) {
-        String folder = getModelFolder(name);
-        Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
-        return path.getName(path.getNameCount() - 1).toString().replaceAll("-", "_");
-    }
 
     private String getModelPkgName(Map<String, Object> vendorExtensions) {
         String folder = getModelFolder(vendorExtensions);
         Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
         return path.getName(path.getNameCount() - 1).toString().replaceAll("-", "_");
-    }
-
-    private String getModelAlias(String name) {
-        String folder = getModelFolder(name);
-        Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
-        return sanitizeName(path.toString(), "_");
     }
 
     private String getModelAlias(Map<String, Object> vendorExtensions) {
@@ -555,8 +561,4 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         return folder.replace(this.modelPackage, "");
     }
 
-    private boolean isModel(CodegenProperty property) {
-        return !property.isPrimitiveType && !this.typeMapping().containsValue(property.dataType);
-
-    }
 }
