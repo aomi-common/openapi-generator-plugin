@@ -313,6 +313,18 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         models.setModels(models.getModels().stream().peek(model -> {
             CodegenModel cmodel = model.getModel();
+            if (!cmodel.oneOf.isEmpty()) {
+                cmodel.vendorExtensions.put("isOneOf", true);
+                List<String> oneOfs = cmodel.oneOf.stream().map(name -> {
+                    String alias = getModelAlias(name);
+                    if (alias.isEmpty()) {
+                        return name;
+                    }
+                    return alias + "." + name;
+                }).collect(Collectors.toList());
+                cmodel.vendorExtensions.put("oneOfs", oneOfs);
+            }
+
             Object importPath = model.getOrDefault("importPath", "");
 
             cmodel.vars.forEach(var -> {
@@ -529,6 +541,12 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         String folder = getModelFolder(vendorExtensions);
         Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
         return path.getName(path.getNameCount() - 1).toString().replaceAll("-", "_");
+    }
+
+    private String getModelAlias(String name) {
+        String folder = getModelFolder(name);
+        Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
+        return sanitizeName(path.toString(), "_");
     }
 
     private String getModelAlias(Map<String, Object> vendorExtensions) {
