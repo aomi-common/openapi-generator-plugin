@@ -228,7 +228,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 op.path = op.path.replaceAll("\\{(.*?)\\}", ":$1");
             }
             Optional.ofNullable(op.allParams).ifPresent(params -> params.forEach(p -> {
-                if (p.isBodyParam) {
+                if (p.isBodyParam && !this.typeMapping.containsValue(p.dataType)) {
                     allModels.stream()
                             .filter(m -> m.getModel().getClassname().equals(p.dataType))
                             .findFirst()
