@@ -241,7 +241,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 op.path = op.path.replaceAll("\\{(.*?)\\}", ":$1");
             }
             Optional.ofNullable(op.allParams).ifPresent(params -> params.forEach(p -> {
-                if (p.isBodyParam && !this.typeMapping.containsValue(p.dataType)) {
+                if (p.isBodyParam) {
                     allModels.stream()
                             .filter(m -> m.getModel().getClassname().equals(p.dataType))
                             .findFirst()
@@ -460,19 +460,17 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         ecp.datetimeFormat = datetimeFormat;
         ecp.dateFormat = dateFormat;
         ecp.timeFormat = timeFormat;
-        if (ecp.isModel) {
-            ecp.packageName = getModelPkgName(ecp.vendorExtensions);
-            ecp.alias = getModelAlias(ecp.vendorExtensions);
-            ecp.importPath = toModelImport(ecp.dataType);
-            ecp.needImport = !importMapping.containsKey(ecp.dataType);
-        }
-        if (ecp.isArray && ecp.items.isModel && ecp.items instanceof ExtendedCodegenProperty) {
-            ecp.packageName = getModelPkgName(ecp.vendorExtensions);
 
-            ExtendedCodegenProperty tmp = (ExtendedCodegenProperty) ecp.items;
-            ecp.alias = tmp.alias;
-            ecp.importPath = tmp.importPath;
-            ecp.needImport = tmp.needImport;
+        if (!cp.isPrimitiveType) {
+            String type = cp.dataType;
+            if (cp.isArray) {
+                type = cp.items.dataType;
+            }
+            if (!this.typeMapping.containsValue(type)) {
+                ecp.packageName = this.getModelPkgName(type);
+                ecp.alias = this.getModelAlias(type);
+                ecp.importPath = this.toModelImport(type);
+            }
         }
 
         return ecp;
@@ -555,6 +553,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         operation.put("filename", this.toApiFilename(classname));
     }
 
+    private String getModelPkgName(String name) {
+        String folder = this.getModelFolder(name);
+        Path path = Paths.get(this.modelPackage().replace('.', File.separatorChar), folder);
+        return path.getName(path.getNameCount() - 1).toString().replaceAll("-", "_");
+    }
 
     private String getModelPkgName(Map<String, Object> vendorExtensions) {
         String folder = getModelFolder(vendorExtensions);
