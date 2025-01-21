@@ -31,6 +31,6 @@ service {{serviceName}} {
 {{#operation}}
     {{#summary}}@doc "{{{.}}}"{{/summary}}
     @handler {{nickname}}
-    {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {{{path}}} ({{classname}}{{nickname}}Req) returns ({{{returnType}}})
+    {{#lambda.lowercase}}{{httpMethod}}{{/lambda.lowercase}} {{{path}}} {{#hasParams}}({{classname}}{{nickname}}Req){{/hasParams}} returns ({{{returnType}}})
 {{/operation}}{{/operations}}
 }

@@ -228,7 +228,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                 op.path = op.path.replaceAll("\\{(.*?)\\}", ":$1");
             }
             Optional.ofNullable(op.allParams).ifPresent(params -> params.forEach(p -> {
-                if (p.isBodyParam && !this.typeMapping.containsValue(p.dataType)) {
+                if (p.isBodyParam) {
                     allModels.stream()
                             .filter(m -> m.getModel().getClassname().equals(p.dataType))
                             .findFirst()
@@ -333,10 +333,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
                     ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var).importPath);
                 }
                 if (var.isArray && var.items.isModel && var instanceof ExtendedCodegenProperty) {
-                    // 如果需要导入的情况下判断是不是等于自己
-                    if (((ExtendedCodegenProperty) var).needImport) {
-                        ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var.items).importPath);
-                    }
+                    ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var.items).importPath);
                 }
             });
 
@@ -451,7 +448,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             ecp.packageName = getModelPkgName(ecp.vendorExtensions);
             ecp.alias = getModelAlias(ecp.vendorExtensions);
             ecp.importPath = toModelImport(ecp.dataType);
-            ecp.needImport = !importMapping.containsKey(ecp.dataType);
+            ecp.needImport = true;
         }
         if (ecp.isArray && ecp.items.isModel && ecp.items instanceof ExtendedCodegenProperty) {
             ecp.packageName = getModelPkgName(ecp.vendorExtensions);
@@ -478,9 +475,6 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         // 因为 AbstractGoCodegen 手动处理的time 这里只能手动排除
         if ("time.Time".equals(name)) {
             return null;
-        }
-        if (importMapping.containsKey(name)) {
-            return importMapping.get(name);
         }
         String dir = getModelFolder(name);
         return Paths.get(this.moduleName, this.modelPackage().replace('.', File.separatorChar), dir).toString().replaceAll("-", "_");
