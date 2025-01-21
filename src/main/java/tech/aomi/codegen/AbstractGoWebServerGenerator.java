@@ -37,6 +37,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     public static final String TIME_FORMAT = "timeFormat";
     public static final String PAGE_PACKAGE = "pagePackage";
     public static final String PAGE_PACKAGE_ALIAS = "pagePackageAlias";
+    public static final String ENABLE_OMITEMPTY = "enableOmitempty";
 
     protected String apiVersion = "1.0.0";
 
@@ -61,6 +62,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
      */
     @Setter
     protected String pagePackage = "page";
+
     @Setter
     protected String pagePackageAlias = "page";
     /**
@@ -82,12 +84,18 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     @Setter
     @Getter
     protected String datetimeFormat = "2006-01-02T15:04:05Z";
+
     @Setter
     @Getter
     protected String dateFormat = "2006-01-02";
+
     @Setter
     @Getter
     protected String timeFormat = "15:04:05";
+
+    @Getter
+    @Setter
+    protected Boolean enableOmitempty = true;
 
     protected Set<String> noCreateAliasPkgs = new HashSet<>();
 
@@ -144,6 +152,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         cliOptions.add(CliOption.newString(PAGE_PACKAGE_ALIAS, "分页包别名"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_MULTIPLE_OF, "go valid support MULTIPLE_OF"));
         cliOptions.add(CliOption.newBoolean(SUPPORT_VALID_REGEXP, "go valid support regexp"));
+        cliOptions.add(CliOption.newBoolean(ENABLE_OMITEMPTY, "model tag add omitepty"));
 
 
         cliOptions.add(CliOption.newBoolean(CodegenConstants.ENUM_CLASS_PREFIX, CodegenConstants.ENUM_CLASS_PREFIX_DESC));
@@ -191,7 +200,11 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         } else {
             this.setPagePackageAlias(sanitizeName(this.pagePackage, "_"));
         }
-
+        if (additionalProperties.containsKey(ENABLE_OMITEMPTY)) {
+            this.setEnableOmitempty(Boolean.parseBoolean(additionalProperties.get(ENABLE_OMITEMPTY).toString()));
+        } else {
+            additionalProperties.put(ENABLE_OMITEMPTY, "true");
+        }
 
         /*
          * Additional Properties.  These values can be passed to the templates and
