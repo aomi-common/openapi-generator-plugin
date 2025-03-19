@@ -1,6 +1,7 @@
 package tech.aomi.codegen;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.openapitools.codegen.CodegenParameter;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class ExtendedCodegenParameter extends CodegenParameter {
     public String timeFormat;
 
     @Getter
+    @Setter
     private List<Map<String, Object>> conditions;
 
     public boolean hasConditions;

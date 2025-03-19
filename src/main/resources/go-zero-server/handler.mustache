@@ -1,0 +1,54 @@
+// 不要编辑该文件，如果handler模板有变动，请直接删除handler目录，然后重新生成
+package {{package}}
+
+import (
+    {{goControllerAlias}} "{{goControllerFullPackage}}"{{#imports}}
+    {{#alias}}{{.}} {{/alias}}"{{import}}"{{/imports}}
+
+    xhttp "bitbucket.org/gatebackend/go-zero/rest/http"
+    "bitbucket.org/gatebackend/go-zero/rest/httpx"
+    "net/http"
+)
+
+{{#operations}}{{#operation}}
+// {{nickname}}Handler {{#summary}}{{{.}}}{{/summary}}
+// {{httpMethod}} {{{basePathWithoutHost}}}{{{path}}}
+{{#isDeprecated}}
+// Deprecated
+{{/isDeprecated}}
+func {{nickname}}Handler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        {{#hasParams}}var req types.{{classname}}{{nickname}}Req
+        {{#vendorExtensions.isArrayBody}}
+        // 读取 request body 为 byte 数组
+        data, err := io.ReadAll(r.Body)
+        if nil != err {
+            httpx.ErrorCtx(r.Context(), w, err)
+            return
+        }
+        var bd = req.RequestBody
+        err = json.Unmarshal(data, &bd)
+        if nil != err {
+            httpx.ErrorCtx(r.Context(), w, err)
+            return
+        }
+        req.RequestBody = bd
+        {{/vendorExtensions.isArrayBody}}
+        {{^vendorExtensions.isArrayBody}}
+        if err := httpx.Parse(r, &req); err != nil {
+            xhttp.JsonErrResponseCtx(r.Context(), w, err)
+            return
+        }
+        {{/vendorExtensions.isArrayBody}}{{/hasParams}}
+
+        l := {{goControllerAlias}}.New{{nickname}}Logic(r.Context(), svcCtx)
+        {{^vendorExtensions.returnTypeIsNil}}resp, {{/vendorExtensions.returnTypeIsNil}}err := l.{{nickname}}({{#hasParams}}&req{{/hasParams}})
+        if err != nil {
+            // code-data 响应格式
+            xhttp.JsonErrResponseCtx(r.Context(), w, err)
+        } else {
+            // code-data 响应格式
+            {{#vendorExtensions.returnTypeIsNil}}httpx.Ok(w)){{/vendorExtensions.returnTypeIsNil}}{{^vendorExtensions.returnTypeIsNil}}xhttp.JsonBaseResponseCtx(r.Context(), w, resp){{/vendorExtensions.returnTypeIsNil}}
+        }
+    }
+}{{/operation}} {{/operations}}

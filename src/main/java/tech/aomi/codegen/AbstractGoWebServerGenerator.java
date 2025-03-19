@@ -49,7 +49,8 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     protected String moduleName = "openapi-server";
 
     @Setter
-    protected String handlerPackage = "handler";
+    protected String handlerPackage;
+
     @Setter
     protected String controllerPackage = "controller";
 
@@ -103,6 +104,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         super();
         this.apiNameSuffix = "";
         apiPackage = "api";
+        handlerPackage = "handler";
         modelPackage = "dto";
 
         // set the output folder here
