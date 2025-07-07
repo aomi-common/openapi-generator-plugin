@@ -80,7 +80,7 @@ public class ExtendedCodegenProperty extends CodegenProperty {
         this.exclusiveMaximum = cp.exclusiveMaximum;
         this.required = cp.required;
         this.deprecated = cp.deprecated;
-        this.hasMoreNonReadOnly = cp.hasMoreNonReadOnly;
+//        this.hasMoreNonReadOnly = cp.hasMoreNonReadOnly;
         this.isPrimitiveType = cp.isPrimitiveType;
         this.isModel = cp.isModel;
         this.isContainer = cp.isContainer;

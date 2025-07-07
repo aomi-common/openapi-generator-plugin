@@ -115,7 +115,8 @@ public class GoZeroServerApiGenerator extends AbstractGoWebServerGenerator {
         // gozero 不支持数组参数
         operationsMap.getOperations().getOperation().forEach(item -> {
             if (item.allParams.size() == 1 && item.allParams.get(0).isBodyParam && item.allParams.get(0).isArray) {
-                item.hasParams = false;
+//                item.hasParams = false;
+                item.allParams.clear();
             }
         });
 

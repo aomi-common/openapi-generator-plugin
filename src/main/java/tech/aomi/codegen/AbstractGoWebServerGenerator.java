@@ -273,7 +273,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             if (op.vendorExtensions.containsKey("x-paginated")) {
                 needAddPage = true;
             }
-            if (op.hasParams) {
+            if (op.getHasParams()) {
                 hasAnyParams = true;
             }
             if ("nil".equalsIgnoreCase(op.returnType)) {
