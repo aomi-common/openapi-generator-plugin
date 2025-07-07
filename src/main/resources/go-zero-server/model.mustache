@@ -4,7 +4,7 @@ package {{modelPackage}}
 // reqs
 {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}{{#hasParams}}
 type {{classname}}{{nickname}}Req struct { {{#allParams}}
-    {{>paramsVar}} {{>headerParamsTag}}{{>cookieParamsTag}}{{>pathParamsTag}}{{>queryParamsTag}}{{>formParamsTag}}{{#vendorExtensions.isArrayBody}}`json:"optional"`{{/vendorExtensions.isArrayBody}}
+    {{>paramsVar}} {{>headerParamsTag}}{{>cookieParamsTag}}{{>pathParamsTag}}{{>queryParamsTag}}{{>formParamsTag}}{{#vendorExtensions.isBaseTypeBody}}`json:"optional"`{{/vendorExtensions.isBaseTypeBody}}
 {{/allParams}}
 }
 {{/hasParams}}{{/operation}}

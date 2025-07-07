@@ -170,6 +170,8 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
         if (additionalProperties.containsKey(HANDLER_PACKAGE)) {
             this.setHandlerPackage(additionalProperties.get(HANDLER_PACKAGE).toString());
+        } else {
+            additionalProperties.put(HANDLER_PACKAGE, this.handlerPackage);
         }
 
         if (additionalProperties.containsKey(CONTROLLER_PACKAGE)) {

@@ -1,30 +1,32 @@
 package tech.aomi.codegen;
 
-import io.swagger.v3.parser.util.SchemaTypeUtil;
+import lombok.Getter;
 import lombok.Setter;
 import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenParameter;
 import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.OperationsMap;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
 
     public static final String SERVICE_NAME = "serviceName";
+    public static final String SVG_PACKAGE = "svcPackage";
 
 
     @Setter
     protected String serviceName;
+
+    @Getter
+    @Setter
+    protected String svcPackage;
 
     public GoZeroServerGenerator() {
         super();
@@ -32,8 +34,7 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         typeMapping.put("DateTime", "string");
         serviceName = "app-api";
         modelPackage = "types";
-
-//        modelPackage = this.apiPackage;
+        svcPackage = moduleName + "/svc";
         /*
          * Models.  You can write model files using the modelTemplateFiles map.
          * if you want to create one template for file, you can do so here.
@@ -61,7 +62,7 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         embeddedTemplateDir = templateDir = "go-zero-server";
 
         cliOptions.add(CliOption.newString(SERVICE_NAME, "go zero service name"));
-        cliOptions.add(new CliOption(SERVICE_NAME, "go zero service name", SchemaTypeUtil.OBJECT_TYPE));
+        cliOptions.add(CliOption.newString(SVG_PACKAGE, "svc package."));
 
     }
 
@@ -70,6 +71,13 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         super.processOpts();
         if (additionalProperties.containsKey(SERVICE_NAME)) {
             this.setServiceName(additionalProperties.get(SERVICE_NAME).toString());
+        } else {
+            additionalProperties.put(SERVICE_NAME, this.serviceName);
+        }
+        if (additionalProperties.containsKey(SVG_PACKAGE)) {
+            this.setSvcPackage(additionalProperties.get(SVG_PACKAGE).toString());
+        } else {
+            additionalProperties.put(SVG_PACKAGE, this.moduleName + "/svc");
         }
         /*
          * Supporting Files.  You can write single files for the generator with the
@@ -84,12 +92,17 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
     public OperationsMap postProcessOperationsWithModels(OperationsMap objs, List<ModelMap> allModels) {
         // gozero 不支持数组参数
         objs.getOperations().getOperation().forEach(item -> {
-            if (item.allParams.size() == 1 && item.allParams.get(0).isBodyParam && item.allParams.get(0).isArray) {
-                item.allParams.get(0).vendorExtensions.put("isArrayBody", true);
-                item.vendorExtensions.put("isArrayBody", true);
+            if (item.allParams.size() == 1 && item.allParams.get(0).isBodyParam && (item.allParams.get(0).isArray || item.allParams.get(0).isMap)) {
+                item.allParams.get(0).nameInPascalCase = "RequestBody";
+                item.allParams.get(0).vendorExtensions.put("isBaseTypeBody", true);
+                item.vendorExtensions.put("isBaseTypeBody", true);
                 List<Map<String, String>> imports = objs.getImports();
-                imports.add(Collections.singletonMap("import", "encoding/json"));
-                imports.add(Collections.singletonMap("import", "io"));
+                if (imports.stream().noneMatch(i -> i.get("import").equalsIgnoreCase("encoding/json"))) {
+                    imports.add(Collections.singletonMap("import", "encoding/json"));
+                }
+                if (imports.stream().noneMatch(i -> i.get("import").equalsIgnoreCase("io"))) {
+                    imports.add(Collections.singletonMap("import", "io"));
+                }
                 objs.setImports(imports);
             }
         });
@@ -112,13 +125,6 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
         String suffix = this.apiTemplateFiles().get(templateName);
         return Paths.get(outputFolder, dir, this.toApiFilename(tag) + suffix).toString();
     }
-
-//    @Override
-//    public String modelFilename(String templateName, String modelName) {
-//        String suffix = modelTemplateFiles().get(templateName);
-//        return modelFileFolder() + File.separator + toModelFilename(modelName) + suffix;
-//    }
-
 
     @Override
     public String toApiFilename(String name) {
@@ -156,12 +162,6 @@ public class GoZeroServerGenerator extends AbstractGoWebServerGenerator {
     public String getHelp() {
         return "Generates a Go zero server library with the gin framework using OpenAPI-Generator.";
 
-    }
-
-    protected Path getRelativePath(String basePath, String targetPath) {
-        Path base = Paths.get(basePath).getParent();
-        Path target = Paths.get(targetPath);
-        return base.relativize(target);
     }
 
 }

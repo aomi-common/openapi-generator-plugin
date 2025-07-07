@@ -4,7 +4,7 @@ package {{package}}
 import (
     {{goControllerAlias}} "{{goControllerFullPackage}}"{{#imports}}
     {{#alias}}{{.}} {{/alias}}"{{import}}"{{/imports}}
-
+    {{svcPackage}}
     xhttp "bitbucket.org/gatebackend/go-zero/rest/http"
     "bitbucket.org/gatebackend/go-zero/rest/httpx"
     "net/http"
@@ -19,7 +19,7 @@ import (
 func {{nickname}}Handler(svcCtx *svc.ServiceContext) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         {{#hasParams}}var req types.{{classname}}{{nickname}}Req
-        {{#vendorExtensions.isArrayBody}}
+        {{#vendorExtensions.isBaseTypeBody}}
         // 读取 request body 为 byte 数组
         data, err := io.ReadAll(r.Body)
         if nil != err {
@@ -33,13 +33,11 @@ func {{nickname}}Handler(svcCtx *svc.ServiceContext) http.HandlerFunc {
             return
         }
         req.RequestBody = bd
-        {{/vendorExtensions.isArrayBody}}
-        {{^vendorExtensions.isArrayBody}}
+        {{/vendorExtensions.isBaseTypeBody}}
         if err := httpx.Parse(r, &req); err != nil {
             xhttp.JsonErrResponseCtx(r.Context(), w, err)
             return
-        }
-        {{/vendorExtensions.isArrayBody}}{{/hasParams}}
+        }{{/hasParams}}
 
         l := {{goControllerAlias}}.New{{nickname}}Logic(r.Context(), svcCtx)
         {{^vendorExtensions.returnTypeIsNil}}resp, {{/vendorExtensions.returnTypeIsNil}}err := l.{{nickname}}({{#hasParams}}&req{{/hasParams}})
