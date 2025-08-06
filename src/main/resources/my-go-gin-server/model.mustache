@@ -17,12 +17,12 @@ const (
 ){{/isEnum}}{{^isEnum}}{{#description}}
 // {{classname}} - {{{description}}}{{/description}}
 type {{classname}} struct {
-{{#vendorExtensions.isOneOf}}{{#vendorExtensions.oneOfs}}{{.}}
-{{/vendorExtensions.oneOfs}}{{/vendorExtensions.isOneOf}}{{^vendorExtensions.isOneOf}}{{#vars}}{{#description}}
+    {{#vendorExtensions.isOneOf}}{{#vendorExtensions.oneOfs}}{{.}}
+    {{/vendorExtensions.oneOfs}}{{/vendorExtensions.isOneOf}}{{^vendorExtensions.isOneOf}}{{#vars}}{{#description}}
 	// {{{.}}}{{/description}}
 	{{#deprecated}}
 	// Deprecated
 	{{/deprecated}}
-	{{name}} {{#isNullable}}*{{/isNullable}}{{#isArray}}[]{{/isArray}}{{#needImport}}{{alias}}.{{/needImport}}{{#isArray}}{{{items.dataType}}}{{/isArray}}{{^isArray}}{{{dataType}}}{{/isArray}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"{{>paramsValid}}{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
+	{{name}} {{#isNullable}}*{{/isNullable}}{{#isArray}}[]{{/isArray}}{{#needImport}}{{#alias}}{{{alias}}}.{{/alias}}{{/needImport}}{{#isArray}}{{{items.dataType}}}{{/isArray}}{{^isArray}}{{{dataType}}}{{/isArray}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"{{>paramsValid}}{{#vendorExtensions.x-go-custom-tag}} {{{.}}}{{/vendorExtensions.x-go-custom-tag}}`
 {{/vars}}{{/vendorExtensions.isOneOf}}
 }{{/isEnum}}{{/model}}{{/models}}
