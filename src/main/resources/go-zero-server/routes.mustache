@@ -7,7 +7,6 @@ import (
 
     {{#apiInfo}}{{#apis}}{{#operations}}
     {{goHandlerAlias}} "{{goHandlerFullPackage}}"{{/operations}}{{/apis}}{{/apiInfo}}
-    "bitbucket.org/gatebackend/go-zero/rest"
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
