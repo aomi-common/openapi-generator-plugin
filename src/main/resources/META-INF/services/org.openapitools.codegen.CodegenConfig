@@ -1,3 +1,4 @@
 tech.aomi.codegen.MyGoGinServerGenerator
 tech.aomi.codegen.GoZeroServerGenerator
 tech.aomi.codegen.GoZeroServerApiGenerator
+tech.aomi.codegen.MyDartDioClientCodegen
