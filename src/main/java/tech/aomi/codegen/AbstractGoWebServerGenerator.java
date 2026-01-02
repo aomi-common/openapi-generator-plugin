@@ -346,10 +346,10 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
 
             cmodel.vars.forEach(var -> {
                 // 排除自己导入自己
-                if (var.isModel && var instanceof ExtendedCodegenProperty) {
+                if (!var.isPrimitiveType && var instanceof ExtendedCodegenProperty) {
                     ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var).importPath);
                 }
-                if (var.isArray && var.items.isModel && var instanceof ExtendedCodegenProperty) {
+                if (var.isArray && !var.items.isPrimitiveType && var instanceof ExtendedCodegenProperty) {
                     // 如果需要导入的情况下判断是不是等于自己
                     if (((ExtendedCodegenProperty) var).needImport) {
                         ((ExtendedCodegenProperty) var).needImport = !importPath.equals(((ExtendedCodegenProperty) var.items).importPath);
