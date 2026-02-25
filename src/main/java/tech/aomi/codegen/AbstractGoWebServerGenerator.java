@@ -38,6 +38,7 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     public static final String PAGE_PACKAGE = "pagePackage";
     public static final String PAGE_PACKAGE_ALIAS = "pagePackageAlias";
     public static final String ENABLE_OMITEMPTY = "enableOmitempty";
+    public static final String RETURN_NIL_CONTENT_TYPES = "returnNilContentTypes";
 
     protected String apiVersion = "1.0.0";
 
@@ -97,6 +98,10 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
     @Getter
     @Setter
     protected Boolean enableOmitempty = true;
+
+    @Getter
+    @Setter
+    protected List<String> returnNilContentTypes = new ArrayList<>();
 
     protected Set<String> noCreateAliasPkgs = new HashSet<>();
 
@@ -209,6 +214,13 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
         } else {
             additionalProperties.put(ENABLE_OMITEMPTY, "true");
         }
+        if (additionalProperties.containsKey(RETURN_NIL_CONTENT_TYPES)) {
+            this.returnNilContentTypes = new ArrayList<String>((List) additionalProperties.get(RETURN_NIL_CONTENT_TYPES));
+        } else {
+            this.returnNilContentTypes = new ArrayList<>();
+            this.returnNilContentTypes.add("application/octet-stream");
+            this.returnNilContentTypes.add("text/event-stream");
+        }
 
         /*
          * Additional Properties.  These values can be passed to the templates and
@@ -279,6 +291,17 @@ public abstract class AbstractGoWebServerGenerator extends AbstractGoCodegen {
             if ("nil".equalsIgnoreCase(op.returnType)) {
                 op.vendorExtensions.put("returnTypeIsNil", true);
             }
+            op.responses.forEach((item) -> {
+
+                if (item.is2xx) {
+                    List<String> intersect = returnNilContentTypes.stream()
+                            .filter(item.getContent().keySet()::contains)
+                            .collect(Collectors.toList());
+                    if (!intersect.isEmpty()) {
+                        op.vendorExtensions.put("returnTypeIsNil", true);
+                    }
+                }
+            });
 
             Optional.ofNullable(op.allParams)
                     .flatMap(params -> params.stream().filter(item -> item.isFile).findFirst())
